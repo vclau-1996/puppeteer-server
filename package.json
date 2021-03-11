@@ -1,0 +1,26 @@
+{
+  "name": "puppeteer-server",
+  "version": "1.0.0",
+  "description": "puppeteer application demo",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "server":"node .\\src\\index.js "
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "koa": "^2.13.1",
+    "koa-bodyparser": "^4.3.0",
+    "koa-router": "^10.0.0",
+    "koa-static": "^5.0.0",
+    "puppeteer": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/koa": "^2.13.1",
+    "@types/koa-router": "^7.4.1",
+    "@types/node": "^14.14.32",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.3"
+  }
+}

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>截图Demo</title>
+  </head>
+  <body>
+    <div>截图DEMO</div>
+    <p>目标地址（只接受https://开头）</p>
+    <input id="url" name="url" type="text" placeholder="请输入url：" />
+    <br />
+    <p>截图文件名</p>
+    <input
+      id="fileName"
+      name="url"
+      type="text"
+      placeholder="请输入fileName："
+    />
+    <p>图片清晰度（可选，图片格式为png的情况下不可调整清晰度）</p>
+    <input
+      id="quality"
+      name="url"
+      type="number"
+      placeholder="请输入图片清晰度1-100："
+    />
+    <p>图片格式（可选）</p>
+    <select id="imgType">
+      <option value="png">png</option>
+      <option value="jpeg">jpeg</option>
+    </select>
+    <p>按照选择器进行特定元素截图（可选）</p>
+    <input id="selector" name="url" type="text" placeholder="请输入选择器" />
+    <br />
+    <button type="button" onclick="screenShot()" style="margin-top: 20px">
+      下载截图
+    </button>
+  </body>
+  <script>
+    function screenShot() {
+      console.log("生成图片");
+      const inputValue = document.getElementById("url").value;
+      const fileName = document.getElementById("fileName").value;
+      const quality = document.getElementById("quality").value;
+      const imgType = document.getElementById("imgType").value;
+      const selector = document.getElementById("selector").value;
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/screenShot", false);
+      // 添加http头，发送信息至服务器时内容编码类型
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4) {
+          if (xhr.status == 200 || xhr.status == 304) {
+            const result = JSON.parse(xhr.responseText);
+            console.log(result);
+            if (result.code !== 2000) {
+              window.alert(result.msg);
+              return;
+            }
+            const downLoadLink = document.createElement("a");
+            downLoadLink.href = result.dataUrl;
+            downLoadLink.download = result.fileName;
+            downLoadLink.style.display = "none";
+            document.body.appendChild(downLoadLink);
+            downLoadLink.click();
+            document.body.removeChild(downLoadLink);
+          }
+        }
+      };
+      xhr.send(
+        JSON.stringify({
+          url: inputValue,
+          fileName: fileName,
+          quality: quality,
+          imgType: imgType,
+          selector: selector,
+        })
+      );
+    }
+  </script>
+</html>
