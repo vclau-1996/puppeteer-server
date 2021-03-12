@@ -17,10 +17,38 @@ const router = new Router();
 const targetPlatformMap = sourceData.targetPlatformMap; // 爬取目标平台的Map
 const platformFilenameMap = sourceData.platformFilenameMap; //爬取目标平台文件名的Map
 
-// 全局浏览器websocket实例
-let browserWSEndpoint;
+// 浏览器websocket链接类，单例模式
+class BrowserWs {
+  // 浏览器websocket链接
+  browserWsInstance = null;
 
-init();
+  // 获取websocket链接
+  static getInstance = async () => {
+    let browser = null;
+    if (!BrowserWs.browserWsInstance) {
+      browser = await puppeteer.launch({
+        // executablePath:
+        //   "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
+        headless: false,
+        args: [
+          "--disable-gpu", // 禁用gpu加速
+          "--disable-dev-shm-usage", //优化内存过小chrome崩溃的问题
+          "--disable-setuid-sandbox", //禁用沙盒模式
+          "--no-first-run", //跳过首次运行任务
+          "--no-sandbox", //禁用沙箱模式
+          "--no-zygote",
+          "--single-process",
+          "--disable-extensions", //禁用扩展程序
+        ],
+      });
+      const wsInstance = await browser.wsEndpoint();
+      BrowserWs.browserWsInstance = wsInstance;
+      return BrowserWs.browserWsInstance;
+    } else {
+      return BrowserWs.browserWsInstance;
+    }
+  };
+}
 
 app.use(bodyParser());
 app.use(staticResource(__dirname, "./html"));
@@ -70,9 +98,11 @@ router.post("/screenShot", async (ctx, next) => {
     //  生成随机文件名
     const randomFileName = parseInt(Math.random() * 100000);
 
+    // 创建浏览器websocket链接
+    const browserWsInstance = await BrowserWs.getInstance();
     // 重新通过websocket链接浏览器
     const browSer = await puppeteer.connect({
-      browserWSEndpoint: browserWSEndpoint,
+      browserWSEndpoint: browserWsInstance,
     });
 
     // 生成页面
@@ -153,9 +183,12 @@ router.post("/spiderIndex", async (ctx, next) => {
     return;
   }
   try {
+    // 创建浏览器websocket链接
+    const browserWsInstance = await BrowserWs.getInstance();
+
     // 重新通过websocket链接浏览器
     browSer = await puppeteer.connect({
-      browserWSEndpoint: browserWSEndpoint,
+      browserWSEndpoint: browserWsInstance,
     });
     // 生成页面
     page = await browSer.newPage();
@@ -194,27 +227,3 @@ app.on("error", (error, ctx) => {
 
 app.use(router.routes());
 app.listen(7878);
-
-/**
- * 初始化浏览器实例
- * 全局只打开一个chrome，提高性能，避免浏览器开启过多占用内存
- */
-async function init() {
-  console.log("开始初始化浏览器实例");
-  const browser = await puppeteer.launch({
-    // executablePath:
-    //   "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
-    headless: true,
-    args: [
-      "--disable-gpu", // 禁用gpu加速
-      "--disable-dev-shm-usage", //优化内存过小chrome崩溃的问题
-      "--disable-setuid-sandbox", //禁用沙盒模式
-      "--no-first-run", //跳过首次运行任务
-      "--no-sandbox", //禁用沙箱模式
-      "--no-zygote",
-      "--single-process",
-      "--disable-extensions", //禁用扩展程序
-    ],
-  });
-  browserWSEndpoint = await browser.wsEndpoint();
-}
